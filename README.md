@@ -1,0 +1,2 @@
+# Scalefocus GoLang Academy
+ 
