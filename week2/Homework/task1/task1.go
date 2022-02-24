@@ -20,6 +20,7 @@ func main() {
 	fmt.Println(daysInMonth(12, 2020))
 	fmt.Println(daysInMonth(14, 2020))
 	fmt.Println(daysInMonth(-11, 2020))
+	fmt.Println(daysInMonth(0, 2020))
 
 }
 
