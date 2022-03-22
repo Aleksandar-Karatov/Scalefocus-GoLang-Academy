@@ -75,7 +75,7 @@ func maxCard(cards []Card) Card {
 	temp := cards[0]
 	for _, card := range cards {
 		if compareCards(temp, card) == 1 {
-			temp.Value, temp.Suite = copyCard(card)
+			temp = card
 		}
 	}
 	return temp
