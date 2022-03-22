@@ -72,8 +72,7 @@ func compareCards(cardOne Card, cardTwo Card) int {
 }
 
 func maxCard(cards []Card) Card {
-	var temp Card
-	temp.Value, temp.Suite = copyCard(cards[0])
+	temp := cards[0]
 	for _, card := range cards {
 		if compareCards(temp, card) == 1 {
 			temp.Value, temp.Suite = copyCard(card)
@@ -82,9 +81,7 @@ func maxCard(cards []Card) Card {
 	return temp
 }
 
-func copyCard(source Card) (CardValue, CardSuit) {
-	return source.Value, source.Suite
-}
+
 
 func checkIfCardIsValid(cardToCheck Card) bool {
 	return cardToCheck.Suite >= 1 && cardToCheck.Suite <= 4 && cardToCheck.Value >= 2 && cardToCheck.Value <= 14
