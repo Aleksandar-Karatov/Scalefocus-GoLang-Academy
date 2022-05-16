@@ -16,23 +16,6 @@ func main() {
 	log.Fatal(http.ListenAndServe(":9000", mux))
 }
 
-// type SimpleHandlerResponse struct {
-// 	Name string `json:"name,omitempty"`
-// }
-
-// func SimpleHandler() http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		name := r.URL.Query().Get("name")
-// 		response := SimpleHandlerResponse{Name: name} // This line tells clients what to expect
-// 		w.Header().Set("Content-Type", "application/json")
-// 		err := json.NewEncoder(w).Encode(&response)
-// 		if err != nil {
-// 			http.Error(w, err.Error(), http.StatusInternalServerError)
-// 			return // notice the early return here. It's a good practice to include it all the time
-// 		}
-// 	}
-// }
-
 type NewsID = int
 
 type IDPayload struct {
