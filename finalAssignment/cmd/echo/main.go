@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"final/cmd"
 	"final/cmd/echo/logicForApp"
 	"final/cmd/echo/repository"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -31,13 +33,24 @@ func main() {
 		if err != nil {
 			log.Println(err)
 		}
-		if username == user.Username && password == user.Password {
+		passwordHash := sha256.Sum256([]byte(password))
+		//passwordMatch := (subtle.ConstantTimeCompare(passwordHash[:], []byte(user.Password)[:]) == 1)
+		if username == user.Username && fmt.Sprint(passwordHash) == user.Password {
 			currentUserID = user.IDOfUser
 			log.Println("current user is:", user.Username, " ", currentUserID)
 			return true, nil
 
 		}
-		return false, nil
+		toInsert := repository.InsertUserInDBParams{}
+		toInsert.Username = username
+		toInsert.Password = fmt.Sprint(passwordHash)
+
+		user, err = queries.InsertUserInDB(ctx, toInsert)
+		if err != nil {
+			log.Println(err)
+		}
+		log.Println("current user is:", user.Username, " ", currentUserID)
+		return true, nil
 
 	}))
 	router.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -56,7 +69,9 @@ func main() {
 	router.DELETE("/api/lists/:id", logicForApp.DeleteList(router.AcquireContext(), &currentUserID, queries, &ctx))
 	router.GET("/api/lists/:id/tasks", logicForApp.GetTasksForList(router.AcquireContext(), &currentUserID, queries, &ctx))
 	router.POST("/api/lists/:id/tasks", logicForApp.PostTask(router.AcquireContext(), &currentUserID, queries, &ctx))
-	//router.DELETE("/api/lists/:id/tasks", )
+	router.GET("/api/tasks/:id", logicForApp.GetTask(router.AcquireContext(), &currentUserID, queries, &ctx))
+	router.DELETE("/api/tasks/:id", logicForApp.DeleteTask(router.AcquireContext(), &currentUserID, queries, &ctx))
+	router.PATCH("/api/tasks/:id", logicForApp.FinishTask(router.AcquireContext(), &currentUserID, queries, &ctx))
 	// Do not touch this line!
 	log.Fatal(http.ListenAndServe(":3000", cmd.CreateCommonMux(router)))
 }

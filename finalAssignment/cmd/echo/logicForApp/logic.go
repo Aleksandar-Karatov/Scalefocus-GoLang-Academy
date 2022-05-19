@@ -29,8 +29,13 @@ func GetLists(ctx echo.Context, curUser *int64, queries *repository.Queries, dbC
 		if err != nil {
 			log.Println(err)
 		}
-		if err != nil {
-			log.Println(err)
+		if len(allListsForCurUser) == 0 {
+			toAdd := repository.InsertListInDBParams{Name: "sample task", Userid: *curUser}
+			queries.InsertListInDB(*dbContext, toAdd)
+			allListsForCurUser, err = queries.GetListsForCurrentUser(*dbContext, *curUser)
+			if err != nil {
+				log.Println(err)
+			}
 		}
 		return ctx.JSON(200, allListsForCurUser)
 	}
@@ -63,6 +68,13 @@ func DeleteList(ctx echo.Context, curUser *int64, queries *repository.Queries, d
 		log.Println("ctx param", ctx.Param("id"))
 		id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
 		log.Println("ID to delete is:", id)
+		allTasks, err := queries.GetTasksForCurrentList(*dbContext, id)
+		if err != nil {
+			log.Println(err)
+		}
+		for _, task := range allTasks {
+			_ = queries.DeleteTasktByID(*dbContext, task.IDOfTask)
+		}
 
 		data := queries.DeleteListByID(*dbContext, id)
 		return ctx.JSON(200, data)
@@ -128,4 +140,52 @@ func PostTask(ctx echo.Context, curUser *int64, queries *repository.Queries, dbC
 		toPost := taskToPost{Id: added.IDOfTask, Text: added.Text, ListId: toAdd.Listid, Completed: added.Completed}
 		return ctx.JSON(200, toPost)
 	}
+}
+
+func DeleteTask(ctx echo.Context, curUser *int64, queries *repository.Queries, dbContext *context.Context) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		log.Println("ctx param", ctx.Param("id"))
+		id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
+		log.Println("ID to delete is:", id)
+
+		data := queries.DeleteTasktByID(*dbContext, id)
+		return ctx.JSON(200, data)
+
+	}
+
+}
+func GetTask(ctx echo.Context, curUser *int64, queries *repository.Queries, dbContext *context.Context) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		log.Println("Called get task")
+		id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
+
+		getTask, err := queries.GetTaskByID(*dbContext, id)
+		if err != nil {
+			log.Println(err)
+		}
+
+		return ctx.JSON(200, getTask)
+	}
+}
+
+func FinishTask(ctx echo.Context, curUser *int64, queries *repository.Queries, dbContext *context.Context) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		log.Println("finish task is called")
+		id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
+		toUpdate := repository.PatchTaskInDBParams{}
+		toUpdate.IDOfTask = id
+		json.NewDecoder(ctx.Request().Body).Decode(&toUpdate)
+		err := queries.PatchTaskInDB(*dbContext, toUpdate)
+		if err != nil {
+			log.Println(err)
+			return ctx.JSON(404, nil)
+		}
+		patchedData, err := queries.GetTaskByID(*dbContext, id)
+		if err != nil {
+			log.Println(err)
+		}
+
+		return ctx.JSON(200, patchedData)
+	}
+
 }

@@ -24,6 +24,8 @@ CREATE TABLE lists(
 
 -- name: GetListsForCurrentUser :many
 SELECT ID_OF_LIST, NAME FROM lists WHERE USERID = $1;
+-- name: GetListById :one
+SELECT * FROM lists WHERE ID_OF_LIST = $1 LIMIT 1;
 -- name: DeleteListByID :exec
 DELETE FROM lists WHERE ID_OF_LIST = $1;
 -- name: InsertListInDB :one
@@ -42,6 +44,7 @@ DELETE FROM tasks WHERE ID_OF_TASK = $1;
 -- name: InsertTaskInDB :one
 INSERT INTO tasks (TEXT, LISTID, COMPLETED) VALUES ($1, $2, $3) RETURNING *;
 -- name: PatchTaskInDB :exec
-UPDATE tasks set COMPLETED = TRUE WHERE ID_OF_TASK = $1;
-
+UPDATE tasks set COMPLETED = $1 WHERE ID_OF_TASK = $2;
+-- name: GetTaskByID :one
+SELECT * FROM tasks WHERE ID_OF_TASK = $1 LIMIT 1;
 

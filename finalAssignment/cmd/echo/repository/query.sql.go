@@ -35,6 +35,16 @@ func (q *Queries) DeleteUserByID(ctx context.Context, idOfUser int64) error {
 	_, err := q.db.ExecContext(ctx, deleteUserByID, idOfUser)
 	return err
 }
+const getListById = `-- name: GetListById :one
+SELECT id_of_list, name, userid FROM lists WHERE ID_OF_LIST = $1 LIMIT 1
+`
+
+func (q *Queries) GetListById(ctx context.Context, idOfList int64) (List, error) {
+	row := q.db.QueryRowContext(ctx, getListById, idOfList)
+	var i List
+	err := row.Scan(&i.IDOfList, &i.Name, &i.Userid)
+	return i, err
+}
 
 const getListsForCurrentUser = `-- name: GetListsForCurrentUser :many
 SELECT ID_OF_LIST, NAME FROM lists WHERE USERID = $1
@@ -67,7 +77,21 @@ func (q *Queries) GetListsForCurrentUser(ctx context.Context, userid int64) ([]G
 	}
 	return items, nil
 }
+const getTaskByID = `-- name: GetTaskByID :one
+SELECT id_of_task, text, listid, completed FROM tasks WHERE ID_OF_TASK = $1 LIMIT 1
+`
 
+func (q *Queries) GetTaskByID(ctx context.Context, idOfTask int64) (Task, error) {
+	row := q.db.QueryRowContext(ctx, getTaskByID, idOfTask)
+	var i Task
+	err := row.Scan(
+		&i.IDOfTask,
+		&i.Text,
+		&i.Listid,
+		&i.Completed,
+	)
+	return i, err
+}
 const getTasksForCurrentList = `-- name: GetTasksForCurrentList :many
 SELECT id_of_task, text, listid, completed FROM tasks WHERE LISTID = $1
 `
@@ -180,10 +204,15 @@ func (q *Queries) InsertUserInDB(ctx context.Context, arg InsertUserInDBParams) 
 }
 
 const patchTaskInDB = `-- name: PatchTaskInDB :exec
-UPDATE tasks set COMPLETED = TRUE WHERE ID_OF_TASK = $1
+UPDATE tasks set COMPLETED = $1 WHERE ID_OF_TASK = $2
 `
 
-func (q *Queries) PatchTaskInDB(ctx context.Context, idOfTask int64) error {
-	_, err := q.db.ExecContext(ctx, patchTaskInDB, idOfTask)
+type PatchTaskInDBParams struct {
+	Completed bool `json:"completed"`
+	IDOfTask  int64
+}
+
+func (q *Queries) PatchTaskInDB(ctx context.Context, arg PatchTaskInDBParams) error {
+	_, err := q.db.ExecContext(ctx, patchTaskInDB, arg.Completed, arg.IDOfTask)
 	return err
 }
