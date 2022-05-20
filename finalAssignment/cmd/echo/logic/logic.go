@@ -1,10 +1,12 @@
-package logicForApp
+package logic
 
 import (
 	"context"
 	"encoding/json"
 	"final/cmd/echo/repository"
+	"fmt"
 	"log"
+	"net/http"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
@@ -17,11 +19,6 @@ func Logout(ctx echo.Context, curUser *int64) echo.HandlerFunc {
 	}
 }
 
-//func(username, password string, c echo.Context)
-// type GetListsPagePayload struct {
-// 	AllListsForUser []repository.GetListsForCurrentUserRow `json:"all"`
-// }
-
 func GetLists(ctx echo.Context, curUser *int64, queries *repository.Queries, dbContext *context.Context) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 
@@ -30,7 +27,7 @@ func GetLists(ctx echo.Context, curUser *int64, queries *repository.Queries, dbC
 			log.Println(err)
 		}
 		if len(allListsForCurUser) == 0 {
-			toAdd := repository.InsertListInDBParams{Name: "sample task", Userid: *curUser}
+			toAdd := repository.InsertListInDBParams{Name: "sample list", Userid: *curUser}
 			queries.InsertListInDB(*dbContext, toAdd)
 			allListsForCurUser, err = queries.GetListsForCurrentUser(*dbContext, *curUser)
 			if err != nil {
@@ -188,4 +185,49 @@ func FinishTask(ctx echo.Context, curUser *int64, queries *repository.Queries, d
 		return ctx.JSON(200, patchedData)
 	}
 
+}
+
+type postWeather struct {
+	FormatedTemp string `json:"formatedTemp"`
+	Description  string `json:"description"`
+	City         string `json:"city"`
+}
+type weatherDesc struct {
+	Desc string `json:"description"`
+}
+type weatherTemp struct {
+	Temp float64 `json:"temp"`
+}
+type weatherAll struct {
+	Weather []weatherDesc `json:"weather"`
+	Main    weatherTemp   `json:"main"`
+	City    string        `json:"name"`
+}
+
+func GetWeather(ctx echo.Context) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		var post postWeather
+		lat := ctx.Request().Header.Values("lat")
+		lon := ctx.Request().Header.Values("lon")
+		log.Println(ctx.Request().Header)
+		var getUrl string
+		if len(lon) == 0 || len(lat) == 0 {
+			getUrl = "https://api.openweathermap.org/data/2.5/weather?q=Sofia&appid=d380671a47954601e4d3aecc1073ad25&units=metric" //hardcoded value for Sofia if there isn`t data for lat and lon
+		} else {
+			getUrl = "https://api.openweathermap.org/data/2.5/weather?lat=" + lat[0] + "&lon=" + lon[0] + "&appid=d380671a47954601e4d3aecc1073ad25&units=metric"
+		}
+
+		res, err := http.Get(getUrl)
+		if err != nil {
+			log.Println(err)
+		}
+		var fromAPI weatherAll
+		log.Println(res.Request.URL)
+		json.NewDecoder(res.Body).Decode(&fromAPI)
+		log.Println(fromAPI)
+		post.City = fromAPI.City
+		post.Description = fromAPI.Weather[0].Desc
+		post.FormatedTemp = fmt.Sprint(fromAPI.Main.Temp)
+		return ctx.JSON(200, post)
+	}
 }

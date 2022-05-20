@@ -7,7 +7,6 @@ package repository
 
 import (
 	"context"
-	//"database/sql"
 )
 
 const deleteListByID = `-- name: DeleteListByID :exec

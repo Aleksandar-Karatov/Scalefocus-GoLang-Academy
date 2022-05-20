@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"final/cmd"
-	"final/cmd/echo/logicForApp"
+	"final/cmd/echo/logic"
 	"final/cmd/echo/repository"
 	"fmt"
 	"log"
@@ -23,18 +23,15 @@ func main() {
 	db, err := sql.Open("sqlite", "DBFinal.db")
 	ctx := context.Background()
 	queries := repository.New(db)
-	//api:= router.Group("/api")
 	if err != nil {
 		log.Fatal(err)
 	}
 	router.Use(middleware.BasicAuth(func(username, password string, _ echo.Context) (bool, error) {
-		//log.Println(db.Query("SELECT * FROM users"))
 		user, err := queries.GetUserByName(ctx, username)
 		if err != nil {
 			log.Println(err)
 		}
 		passwordHash := sha256.Sum256([]byte(password))
-		//passwordMatch := (subtle.ConstantTimeCompare(passwordHash[:], []byte(user.Password)[:]) == 1)
 		if username == user.Username && fmt.Sprint(passwordHash) == user.Password {
 			currentUserID = user.IDOfUser
 			log.Println("current user is:", user.Username, " ", currentUserID)
@@ -49,6 +46,7 @@ func main() {
 		if err != nil {
 			log.Println(err)
 		}
+		currentUserID = user.IDOfUser
 		log.Println("current user is:", user.Username, " ", currentUserID)
 		return true, nil
 
@@ -62,16 +60,17 @@ func main() {
 		}
 	})
 
-	router.GET("/api", logicForApp.Logout(router.AcquireContext(), &currentUserID))
-	router.GET("/api/lists", logicForApp.GetLists(router.AcquireContext(), &currentUserID, queries, &ctx))
-	router.POST("/api/lists", logicForApp.PostList(router.AcquireContext(), &currentUserID, queries, &ctx))
-	router.GET("/api/lists/:id", logicForApp.GetList(router.AcquireContext(), &currentUserID, queries, &ctx))
-	router.DELETE("/api/lists/:id", logicForApp.DeleteList(router.AcquireContext(), &currentUserID, queries, &ctx))
-	router.GET("/api/lists/:id/tasks", logicForApp.GetTasksForList(router.AcquireContext(), &currentUserID, queries, &ctx))
-	router.POST("/api/lists/:id/tasks", logicForApp.PostTask(router.AcquireContext(), &currentUserID, queries, &ctx))
-	router.GET("/api/tasks/:id", logicForApp.GetTask(router.AcquireContext(), &currentUserID, queries, &ctx))
-	router.DELETE("/api/tasks/:id", logicForApp.DeleteTask(router.AcquireContext(), &currentUserID, queries, &ctx))
-	router.PATCH("/api/tasks/:id", logicForApp.FinishTask(router.AcquireContext(), &currentUserID, queries, &ctx))
+	router.GET("/api", logic.Logout(router.AcquireContext(), &currentUserID))
+	router.GET("/api/lists", logic.GetLists(router.AcquireContext(), &currentUserID, queries, &ctx))
+	router.POST("/api/lists", logic.PostList(router.AcquireContext(), &currentUserID, queries, &ctx))
+	router.GET("/api/lists/:id", logic.GetList(router.AcquireContext(), &currentUserID, queries, &ctx))
+	router.DELETE("/api/lists/:id", logic.DeleteList(router.AcquireContext(), &currentUserID, queries, &ctx))
+	router.GET("/api/lists/:id/tasks", logic.GetTasksForList(router.AcquireContext(), &currentUserID, queries, &ctx))
+	router.POST("/api/lists/:id/tasks", logic.PostTask(router.AcquireContext(), &currentUserID, queries, &ctx))
+	router.GET("/api/tasks/:id", logic.GetTask(router.AcquireContext(), &currentUserID, queries, &ctx))
+	router.DELETE("/api/tasks/:id", logic.DeleteTask(router.AcquireContext(), &currentUserID, queries, &ctx))
+	router.PATCH("/api/tasks/:id", logic.FinishTask(router.AcquireContext(), &currentUserID, queries, &ctx))
+	router.GET("/api/weather", logic.GetWeather(router.AcquireContext()))
 	// Do not touch this line!
 	log.Fatal(http.ListenAndServe(":3000", cmd.CreateCommonMux(router)))
 }
