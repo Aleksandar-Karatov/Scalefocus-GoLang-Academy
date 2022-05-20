@@ -2,11 +2,13 @@ package logic
 
 import (
 	"context"
+	"encoding/csv"
 	"encoding/json"
 	"final/cmd/echo/repository"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
@@ -230,4 +232,39 @@ func GetWeather(ctx echo.Context) echo.HandlerFunc {
 		post.FormatedTemp = fmt.Sprint(fromAPI.Main.Temp)
 		return ctx.JSON(200, post)
 	}
+}
+
+func GetCSV(ctx echo.Context, curUser *int64, queries *repository.Queries, dbContext *context.Context) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		file, err := os.Create("result.csv")
+		if err != nil {
+			log.Println(err)
+		}
+		defer file.Close()
+		writer := csv.NewWriter(file)
+		defer writer.Flush()
+		var records [][]string
+		user, err := queries.GetUserByID(*dbContext, *curUser)
+		if err != nil {
+			log.Println(err)
+		}
+		allListsForUser, err := queries.GetListsForCurrentUser(*dbContext, user.IDOfUser)
+		if err != nil {
+			log.Println(err)
+		}
+		records = append(records, []string{"username: " + user.Username})
+		for _, list := range allListsForUser {
+			records = append(records, []string{"list name:" + list.Name})
+			tasksForCurrentList, err := queries.GetTasksForCurrentList(*dbContext, list.IDOfList)
+			if err != nil {
+				log.Println(err)
+			}
+			for _, task := range tasksForCurrentList {
+				records = append(records, []string{"task text: " + task.Text, "completed: " + strconv.FormatBool(task.Completed)})
+			}
+		}
+		writer.WriteAll(records)
+		return ctx.JSON(200, nil)
+	}
+
 }

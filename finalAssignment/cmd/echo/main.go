@@ -71,6 +71,7 @@ func main() {
 	router.DELETE("/api/tasks/:id", logic.DeleteTask(router.AcquireContext(), &currentUserID, queries, &ctx))
 	router.PATCH("/api/tasks/:id", logic.FinishTask(router.AcquireContext(), &currentUserID, queries, &ctx))
 	router.GET("/api/weather", logic.GetWeather(router.AcquireContext()))
+	router.GET("/csv", logic.GetCSV(router.AcquireContext(), &currentUserID, queries, &ctx))
 	// Do not touch this line!
 	log.Fatal(http.ListenAndServe(":3000", cmd.CreateCommonMux(router)))
 }

@@ -7,8 +7,8 @@ package repository
 import ()
 
 type List struct {
-	IDOfList int64
-	Name     string
+	IDOfList int64 
+	Name     string `json:"name"`
 	Userid   int64
 }
 
@@ -21,6 +21,6 @@ type Task struct {
 
 type User struct {
 	IDOfUser int64
-	Username string
-	Password string
+	Username string	`json:"username"`
+	Password string 
 }
