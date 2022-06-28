@@ -1,0 +1,16 @@
+username: admin
+list name:admin1list
+task text: admin1task1,completed: false
+task text: admin1task2,completed: false
+list name:admin1
+task text: task11,completed: false
+task text: task12,completed: false
+task text: task13,completed: false
+list name:admin2
+task text: task21,completed: false
+task text: task22,completed: false
+task text: task23,completed: true
+list name:admin3
+task text: task31,completed: true
+task text: task32,completed: true
+task text: task33,completed: true
