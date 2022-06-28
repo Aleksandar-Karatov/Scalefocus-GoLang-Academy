@@ -2,6 +2,6 @@ version: 1
 packages:
   - path: "repositoryWithCodeGen"
     name: "repositoryWithCodeGen"
-    engine: "postgresql"
+
     schema: "schema.sql"
     queries: "query.sql"
